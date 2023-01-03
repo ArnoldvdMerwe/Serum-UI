@@ -86,6 +86,12 @@ q-header
         label = 'TRADING VIEW'
         to = '/tradingview'
       )
+      q-btn(
+        rounded
+        filled
+        label = 'ORDER BOOK'
+        to = '/orderbook'
+      )
     q-space
     .row(v-if="store.isAuthorized")
       | {{ store.getAccount }}
