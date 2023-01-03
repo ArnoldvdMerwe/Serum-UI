@@ -61,6 +61,31 @@ q-header
     img.logo.q-mr-md(
       src='~assets/logo.png'
     )
+    div.col.row.justify-evenly
+      q-btn(
+        rounded
+        filled
+        label = 'HOME'
+        to = '/'
+      )
+      q-btn(
+        rounded
+        filled
+        label = 'FORM'
+        to = '/form'
+      )
+      q-btn(
+        rounded
+        filled
+        label = 'METER DATA'
+        to = '/meterdata'
+      )
+      q-btn(
+        rounded
+        filled
+        label = 'TRADING VIEW'
+        to = '/tradingview'
+      )
     q-space
     .row(v-if="store.isAuthorized")
       | {{ store.getAccount }}
