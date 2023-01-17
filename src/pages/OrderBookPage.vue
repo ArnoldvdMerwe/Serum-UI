@@ -3,7 +3,6 @@ import { defineComponent } from 'vue';
 import ChartComponent from 'src/components/ChartComponent.vue';
 import axios from 'axios';
 
-
 export default defineComponent({
   name: 'MeterDataPage',
   components: {
@@ -13,113 +12,157 @@ export default defineComponent({
   data() {
     return {
       pagination: {
-        rowsPerPage: 20
+        rowsPerPage: 10,
+        sortBy: 'value',
+        descending: true
       },
-      sellcolumns: [] as unknown[],
-      sellrows: [] as {value: number, quantity: number, totalquantity: number}[],
-      buycolumns: [] as unknown[],
-      buyrows: [] as {value: number, quantity: number, totalquantity: number}[],
-      mydata: {
-          datasets: [
-            {
-              data: [] as {x: number, y: number}[],
-              showLine: true,
-              borderColor: 'rgba(0, 255, 0, 1)',
-              backgroundColor: 'rgba(0, 255, 0, 0.5)',
-              fill: 'start'
-            },
-            {
-              data: [] as {x: number, y: number}[],
-              showLine: true,
-              borderColor: 'rgba(255, 0, 0, 1)',
-              backgroundColor: 'rgba(255, 0, 0, 0.5)',
-              fill: 'end'
-            }
-          ]
-        },
+      paginationList: [2, 5, 10, 15, 20],
+
+      sellTableColumns: [] as Record<string, unknown>[],
+      sellData: [] as {
+        value: number;
+        quantity: number;
+        totalquantity: number;
+      }[],
+      // Data given to table is different than fetched data so that the data is correctly formatted with pagination
+      displaySellData: [] as {
+        value: number;
+        quantity: number;
+        totalquantity: number;
+      }[],
+      buyTableColumns: [] as Record<string, unknown>[],
+      buyData: [] as {
+        value: number;
+        quantity: number;
+        totalquantity: number;
+      }[],
+
+      chartData: {
+        datasets: [
+          {
+            data: [] as { x: number; y: number }[],
+            showLine: true,
+            borderColor: 'rgba(0, 255, 0, 1)',
+            backgroundColor: 'rgba(0, 255, 0, 0.5)',
+            fill: 'start'
+          },
+          {
+            data: [] as { x: number; y: number }[],
+            showLine: true,
+            borderColor: 'rgba(255, 0, 0, 1)',
+            backgroundColor: 'rgba(255, 0, 0, 0.5)',
+            fill: 'end'
+          }
+        ]
+      },
+      chartDataLoaded: false,
+
+      fuelSourceType: 'SOLAR',
+      fuelSourceTypeList: ['SOLAR', 'WIND', 'GEOTHERMAL', 'HYDROPOWER']
     };
   },
   async created() {
-    this.sellcolumns = [
+    this.sellTableColumns = [
       {
         name: 'value',
         required: true,
         align: 'left',
         style: 'color: red',
         field: 'value',
-        format: (val: number) =>
-          `${(Math.round(val * 100) / 100).toFixed(1)}`
+        format: (val: number) => `${(Math.round(val * 100) / 100).toFixed(1)}`
       },
       {
         name: 'quantity',
         align: 'left',
         field: 'quantity',
-        format: (val: number) =>
-          `${(Math.round(val * 100) / 100).toFixed(1)}`
+        format: (val: number) => `${(Math.round(val * 100) / 100).toFixed(1)}`
       },
       {
         name: 'totalquantity',
         align: 'left',
         field: 'totalquantity',
-        format: (val: number) =>
-          `${(Math.round(val * 100) / 100).toFixed(1)}`
+        format: (val: number) => `${(Math.round(val * 100) / 100).toFixed(1)}`
       }
     ];
 
-    this.buycolumns = [
+    this.buyTableColumns = [
       {
         name: 'value',
         required: true,
         align: 'left',
         style: 'color: green',
         field: 'value',
-        format: (val: number) =>
-          `${(Math.round(val * 100) / 100).toFixed(1)}`
+        format: (val: number) => `${(Math.round(val * 100) / 100).toFixed(1)}`
       },
       {
         name: 'quantity',
         align: 'left',
         field: 'quantity',
-        format: (val: number) =>
-          `${(Math.round(val * 100) / 100).toFixed(1)}`
+        format: (val: number) => `${(Math.round(val * 100) / 100).toFixed(1)}`
       },
       {
         name: 'totalquantity',
         align: 'left',
         field: 'totalquantity',
-        format: (val: number) =>
-          `${(Math.round(val * 100) / 100).toFixed(1)}`
+        format: (val: number) => `${(Math.round(val * 100) / 100).toFixed(1)}`
       }
     ];
 
     // Setup data for sell (asks) portion of graph
-    this.sellrows = await this.fetchSellData();
-    this.mydata.datasets[1].data = this.sellrows.map( (item) => ({x: item.totalquantity, y: item.value}) );
-    this.mydata.datasets[1].data.push({x: 0, y: this.sellrows[this.sellrows.length - 1].value});
+    this.sellData = await this.fetchSellData();
+    this.chartData.datasets[1].data = this.sellData.map((item) => ({
+      x: item.totalquantity,
+      y: item.value
+    }));
+    this.chartData.datasets[1].data.push({
+      x: 0,
+      y: this.sellData[this.sellData.length - 1].value
+    });
+    // Setup table for sell orders
+    // Need to look at displayed number of orders and show the correct ones
+    // The sell order table needs to show the orders closest to the buy orders
+    this.displaySellData = this.sellData;
+    this.changeDisplayedSellOrders();
 
     // Setup data for buy (bids) portion of graph
-    this.buyrows = await this.fetchBuyData();
-
-    // This removes erronous entry of buy value of 9007199254740991
-    // Comment this line to get the true format
-    this.buyrows = this.buyrows.filter(item => item.value < 10000);
-
-
-    this.mydata.datasets[0].data = this.buyrows.map( (item) => ({x: item.totalquantity, y: item.value}) );
-    this.mydata.datasets[0].data.unshift({x: 0, y: this.buyrows[0].value});
+    this.buyData = await this.fetchBuyData();
+    this.chartData.datasets[0].data = this.buyData.map((item) => ({
+      x: item.totalquantity,
+      y: item.value
+    }));
+    this.chartData.datasets[0].data.unshift({ x: 0, y: this.buyData[0].value });
+    this.chartDataLoaded = true;
   },
 
   methods: {
-    async fetchSellData(): Promise<{value: number, quantity: number, totalquantity: number}[]> {
-      const response = await axios.get('http://localhost:5000/api/orderdata/sell');
+    async fetchSellData(): Promise<
+      { value: number; quantity: number; totalquantity: number }[]
+    > {
+      const response = await axios.get(
+        'http://localhost:5000/api/orderdata/sell'
+      );
       return response.data;
     },
 
-    async fetchBuyData(): Promise<{value: number, quantity: number, totalquantity: number}[]> {
-      const response = await axios.get('http://localhost:5000/api/orderdata/buy');
+    async fetchBuyData(): Promise<
+      { value: number; quantity: number; totalquantity: number }[]
+    > {
+      const response = await axios.get(
+        'http://localhost:5000/api/orderdata/buy'
+      );
       return response.data;
     },
 
+    // Show sell orders closest to the highest buy orders
+    changeDisplayedSellOrders() {
+      if (this.pagination.rowsPerPage < this.sellData.length) {
+        this.displaySellData = this.sellData.slice(
+          -this.pagination.rowsPerPage
+        );
+      } else {
+        this.displaySellData = this.sellData;
+      }
+    }
   }
 });
 </script>
@@ -128,47 +171,59 @@ export default defineComponent({
 q-page.fit(
   padding
   )
-  div.row.flex-center
-    div.col-5(
-      style = "height: 60vh"
-    )
-      ChartComponent.q-pa-md(
-        type = 'scatter'
-        :data = 'mydata'
+  div.row.items-start.justify-between
+    div.col-2
+      q-select(
+        bg-color = "white"
+        filled
+        v-model = 'fuelSourceType'
+        :options = 'fuelSourceTypeList'
+        label = 'List of fuel source types'
       )
-    div.col-2.items-center
-      q-table(
-        :pagination = "pagination"
-        :rows = "sellrows"
-        :columns = "sellcolumns"
-        row-key = "value"
-        hide-bottom
-        hide-header
-        dark
-        dense
-        square
-        flat
+    div.row.col-8.flex-center
+      div.col-6(
+        style = "height: 60vh"
+        v-if = 'chartDataLoaded'
       )
-      div.row.flex-center.bg-dark
-        h5.text-white(
+        ChartComponent.q-pa-md(
+          type = 'scatter'
+          :data = 'chartData'
+        )
+      div.col-3
+        q-table(
+          v-model:pagination = "pagination"
+          :rows = "displaySellData"
+          :columns = "sellTableColumns"
+          row-key = "value"
+          hide-bottom
+          hide-header
+          dark
+          dense
+          square
+          flat
+        )
+        h5.row.flex-center.bg-dark.text-white(
           style = 'margin: 0px'
         ) Show last transaction here
-      q-table(
-        :pagination = "pagination"
-        :rows = "buyrows"
-        :columns = "buycolumns"
-        row-key = "value"
-        hide-bottom
-        hide-header
-        dark
-        dense
-        square
-        flat
+        q-table(
+          v-model:pagination = "pagination"
+          :rows = "buyData"
+          :columns = "buyTableColumns"
+          row-key = "value"
+          hide-bottom
+          hide-header
+          dark
+          dense
+          square
+          flat
+        )
+    div.col-2
+      q-select(
+        bg-color = "white"
+        filled
+        v-model = 'pagination.rowsPerPage'
+        :options = 'paginationList'
+        label = 'Number of orders'
+        @update:model-value = 'changeDisplayedSellOrders'
       )
 </template>
-
-<style scoped>
-.lw-chart {
-  height: 1000px;
-}
-</style>
