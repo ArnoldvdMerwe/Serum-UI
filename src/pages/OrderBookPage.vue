@@ -36,6 +36,11 @@ export default defineComponent({
         quantity: number;
         totalquantity: number;
       }[],
+      displayBuyData: [] as {
+        value: number;
+        quantity: number;
+        totalquantity: number;
+      }[],
 
       chartData: {
         datasets: [
@@ -61,7 +66,7 @@ export default defineComponent({
       fuelSourceTypeList: ['SOLAR', 'WIND', 'GEOTHERMAL', 'HYDROPOWER']
     };
   },
-  async created() {
+  async mounted() {
     this.sellTableColumns = [
       {
         name: 'value',
@@ -108,30 +113,17 @@ export default defineComponent({
       }
     ];
 
-    // Setup data for sell (asks) portion of graph
+    // Fetch data
     this.sellData = await this.fetchSellData();
-    this.chartData.datasets[1].data = this.sellData.map((item) => ({
-      x: item.totalquantity,
-      y: item.value
-    }));
-    this.chartData.datasets[1].data.push({
-      x: 0,
-      y: this.sellData[this.sellData.length - 1].value
-    });
-    // Setup table for sell orders
-    // Need to look at displayed number of orders and show the correct ones
-    // The sell order table needs to show the orders closest to the buy orders
-    this.displaySellData = this.sellData;
-    this.changeDisplayedSellOrders();
-
-    // Setup data for buy (bids) portion of graph
     this.buyData = await this.fetchBuyData();
-    this.chartData.datasets[0].data = this.buyData.map((item) => ({
-      x: item.totalquantity,
-      y: item.value
-    }));
-    this.chartData.datasets[0].data.unshift({ x: 0, y: this.buyData[0].value });
+    this.displaySellData = this.sellData;
+    this.displayBuyData = this.buyData;
+    // Change displayed orders according to pagination
+    this.changeDisplayedSellOrders();
+    this.changeDisplayedBuyOrders();
+    this.updateMarketDepthChartData();
     this.chartDataLoaded = true;
+    this.updateMarketDepthChartGraph();
   },
 
   methods: {
@@ -162,6 +154,41 @@ export default defineComponent({
       } else {
         this.displaySellData = this.sellData;
       }
+    },
+
+    changeDisplayedBuyOrders() {
+      if (this.pagination.rowsPerPage < this.buyData.length) {
+        this.displayBuyData = this.buyData.slice(
+          0,
+          this.pagination.rowsPerPage
+        );
+      } else {
+        this.displayBuyData = this.buyData;
+      }
+    },
+
+    updateMarketDepthChartData() {
+      this.chartData.datasets[1].data.length = 0;
+      this.chartData.datasets[1].data = this.displaySellData.map((item) => ({
+        x: item.totalquantity,
+        y: item.value
+      }));
+      this.chartData.datasets[1].data.push({
+        x: 0,
+        y: this.displaySellData[this.displaySellData.length - 1].value
+      });
+      this.chartData.datasets[0].data = this.displayBuyData.map((item) => ({
+        x: item.totalquantity,
+        y: item.value
+      }));
+      this.chartData.datasets[0].data.unshift({
+        x: 0,
+        y: this.displayBuyData[0].value
+      });
+    },
+
+    updateMarketDepthChartGraph() {
+      (this.$refs.chart as any).updateChart();
     }
   }
 });
@@ -183,11 +210,11 @@ q-page.fit(
     div.row.col-8.flex-center
       div.col-6(
         style = "height: 60vh"
-        v-if = 'chartDataLoaded'
       )
         ChartComponent.q-pa-md(
           type = 'scatter'
           :data = 'chartData'
+          ref = 'chart'
         )
       div.col-3
         q-table(
@@ -207,7 +234,7 @@ q-page.fit(
         ) Show last transaction here
         q-table(
           v-model:pagination = "pagination"
-          :rows = "buyData"
+          :rows = "displayBuyData"
           :columns = "buyTableColumns"
           row-key = "value"
           hide-bottom
@@ -224,6 +251,6 @@ q-page.fit(
         v-model = 'pagination.rowsPerPage'
         :options = 'paginationList'
         label = 'Number of orders'
-        @update:model-value = 'changeDisplayedSellOrders'
+        @update:model-value = 'changeDisplayedSellOrders(); changeDisplayedBuyOrders(); updateMarketDepthChartData(); updateMarketDepthChartGraph();'
       )
 </template>

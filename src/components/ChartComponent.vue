@@ -19,8 +19,8 @@ export default defineComponent({
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              display: false,
-              }
+              display: false
+            }
           },
           elements: {
             point: {
@@ -51,11 +51,17 @@ export default defineComponent({
               ticks: {
                 color: 'white'
               }
-            },
+            }
           }
-        }
+        };
       }
     }
+  },
+
+  data: () => {
+    return {
+      chart: {} as any
+    };
   },
 
   mounted() {
@@ -66,12 +72,17 @@ export default defineComponent({
     chartConstructor(chartType: string, chartData: any, chartOptions: any) {
       const chartElement = document.getElementById('chartid');
       if (chartElement != null) {
-        const chart = new Chart(chartElement as ChartItem, {
+        const newChart = new Chart(chartElement as ChartItem, {
           type: chartType as keyof ChartTypeRegistry,
           data: chartData,
           options: chartOptions
         });
+        Object.seal(newChart);
+        this.chart = newChart;
       }
+    },
+    updateChart() {
+      this.chart.update();
     }
   }
 });
