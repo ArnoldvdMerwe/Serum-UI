@@ -18,6 +18,14 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/orderbook',
         component: () => import('pages/OrderBookPage.vue')
+      },
+      {
+        path: '/orderbook',
+        component: () => import('pages/OrderBookPage.vue')
+      },
+      {
+        path: '/candlestick',
+        component: () => import('pages/CandlestickPage.vue')
       }
     ]
   },
