@@ -92,6 +92,12 @@ q-header
         label = 'ORDER BOOK'
         to = '/orderbook'
       )
+      q-btn(
+        rounded
+        filled
+        label = 'CANDLESTICK'
+        to = '/candlestick'
+      )
     q-space
     .row(v-if="store.isAuthorized")
       | {{ store.getAccount }}
