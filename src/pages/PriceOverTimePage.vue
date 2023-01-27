@@ -1,5 +1,4 @@
 <script lang="ts">
-import { bigIntLiteral } from '@babel/types';
 import axios from 'axios';
 import {
   CandlestickData,
@@ -22,7 +21,7 @@ export default defineComponent({
       candlestickChart: {} as IChartApi,
       candlestickSeries: {} as ISeriesApi<'Candlestick'>,
       timeDivision: 'Month',
-      timeDivisionList: ['Minute', 'Half-hour', 'Hour', 'Day', 'Month'],
+      timeDivisionList: ['Half-hour', 'Hour', 'Day', 'Month'],
       id: 0,
       idList: [] as number[]
     };
@@ -54,7 +53,8 @@ export default defineComponent({
         }
       },
       timeScale: {
-        timeVisible: true
+        timeVisible: true,
+        minBarSpacing: 0
       }
     };
     this.lineChart = createChart(
@@ -150,27 +150,28 @@ export default defineComponent({
 q-page(
   padding
   )
-  h4.row.flex-center.bg-black.text-white Price over time - Line graph
+  h5.row.flex-center.bg-black.text-white Price over time - Line graph
   div.row.flex-center
-      div.row.flex-center(
-          style = 'height: 450px; width: 185vh;'
-          ref='lineChartContainer'
-      )
-      h6.column.flex-center.bg-black.text-white(
-          style = 'margin: 0px; writing-mode: vertical-rl; '
-      ) Price
+    div.row.flex-center(
+        style = 'height: 450px; width: 185vh;'
+        ref='lineChartContainer'
+    )
+    h6.column.flex-center.bg-black.text-white(
+      style = 'margin: 0px; writing-mode: vertical-rl;'
+    ) Price
   h6.row.flex-center.bg-black.text-white(
       style = 'margin: 0px;'
   ) Time
-  h4.row.flex-center.bg-black.text-white Price over time - Candlestick chart
+  h5.row.flex-center.bg-black.text-white Price over time - Candlestick chart
   div.row.flex-center
-      div.row.flex-center(
-              style = 'height: 450px; width: 185vh;'
-              ref='candlestickChartContainer'
-          )
-      h6.column.flex-center.bg-black.text-white(
-          style = 'margin: 0px; writing-mode: vertical-rl; '
-      ) Price
+    div.row.flex-center(
+      style = 'height: 450px; width: 185vh;'
+      ref='candlestickChartContainer'
+    )
+    h6.column.flex-center.bg-black.text-white(
+      style = 'margin: 0px; writing-mode: vertical-rl;'
+
+    ) Price
   h6.row.flex-center.bg-black.text-white(
       style = 'margin: 0px;'
   ) Time
