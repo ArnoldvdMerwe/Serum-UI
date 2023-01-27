@@ -107,7 +107,7 @@ export default defineComponent({
 q-page(
   padding
   )
-  div.row
+  div.row.flex-center
     div.row.flex-center(
         style = 'height: 450px; width: 185vh;'
         ref='chartContainer'

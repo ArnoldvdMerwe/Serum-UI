@@ -26,6 +26,10 @@ const routes: RouteRecordRaw[] = [
       {
         path: '/candlestick',
         component: () => import('pages/CandlestickPage.vue')
+      },
+      {
+        path: '/priceovertime',
+        component: () => import('pages/PriceOverTimePage.vue')
       }
     ]
   },
