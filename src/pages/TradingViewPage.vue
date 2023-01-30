@@ -34,6 +34,10 @@ export default defineComponent({
       layout: {
         textColor: 'black',
         background: { type: 'solid', color: 'white' }
+      },
+      timeScale: {
+        timeVisible: true,
+        minBarSpacing: 0
       }
     };
     chart = createChart(
@@ -64,21 +68,21 @@ export default defineComponent({
     },
 
     generateNewSampleData(): LineData[] {
-      const randomFactor = 25 + Math.random() * 25;
+      const randomFactor = 3000 + Math.random() * 3000;
       function samplePoint(i: number) {
         return (
           i *
-            (0.5 +
-              Math.cos(i / 10) * 0.2 +
-              Math.cos(i / 20) * 0.4 +
-              Math.cos(i / randomFactor) * 0.8 +
-              Math.cos(i / 500) * 0.5) +
+            (0.0125 +
+              Math.cos(i / 2000) * 0.00625 +
+              Math.cos(i / 4000) * 0.0125 +
+              Math.cos(i / randomFactor) * 0.025 +
+              Math.cos(i / 100000) * 0.05) +
           200
         );
       }
       const res = [];
       let date = new Date(Date.UTC(2020, 0, 1, 0, 0, 0, 0));
-      const numberOfPoints = 500;
+      const numberOfPoints = 87600;
       for (var i = 0; i < numberOfPoints; ++i) {
         const time = (date.getTime() / 1000) as Time;
         const value: number = samplePoint(i);
@@ -87,7 +91,7 @@ export default defineComponent({
           time
         });
 
-        date.setUTCDate(date.getUTCDate() + 1);
+        date.setMinutes(date.getMinutes() + 6);
       }
       this.generatedLineData = res;
       return res;

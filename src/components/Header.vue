@@ -98,6 +98,12 @@ q-header
         label = 'CANDLESTICK'
         to = '/candlestick'
       )
+      q-btn(
+        rounded
+        filled
+        label = 'PRICE OVER TIME'
+        to = '/priceovertime'
+      )
     q-space
     .row(v-if="store.isAuthorized")
       | {{ store.getAccount }}
